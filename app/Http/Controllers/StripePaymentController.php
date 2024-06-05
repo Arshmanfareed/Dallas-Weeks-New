@@ -1,7 +1,7 @@
 <?php
-    
+
 namespace App\Http\Controllers;
-     
+
 use Illuminate\Http\Request;
 use Session;
 use Stripe;
@@ -20,38 +20,39 @@ class StripePaymentController extends Controller
      */
     public function stripe()
     {
-        $data= [
-            'title'=>'Login Page'
+        $data = [
+            'title' => 'Login Page'
         ];
 
         return view('stripe', $data);
     }
-    
+
     /**
      * success response method.
      *
      * @return \Illuminate\Http\Response
      */
-      
+
     public function stripePost(Request $request)
     {
-        $valid_data = [
-            'name' => $request->input('username'),
-            'email' => $request->input('email'),
-        ];
+        // $valid_data = [
+        //     'name' => $request->input('username'),
+        //     'email' => $request->input('email'),
+        // ];
 
-        $validator = Validator::make($valid_data, [
-            'name' => 'required|unique:users',
-            'email' => 'required|email|unique:users',
-            // 'password' => 'required|min:6|confirmed',
-        ]);
+        // $validator = Validator::make($valid_data, [
+        //     'name' => 'required|unique:users',
+        //     'email' => 'required|email|unique:users',
+        //     // 'password' => 'required|min:6|confirmed',
+        // ]);
 
-        if ($validator->fails()) {
-            // If validation fails, return to the signup page with errors
-            return back()->withErrors($validator)->withInput();
-        }
+        // if ($validator->fails()) {
+        //     // If validation fails, return to the signup page with errors
+        //     return back()->withErrors($validator)->withInput();
+        // }
 
-        Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+     
+       Stripe\Stripe::setApiKey(config('services.stripe.secret'));
 
         try {
             $customer = Stripe\Customer::create([
@@ -88,18 +89,18 @@ class StripePaymentController extends Controller
             if ($response['status'] === 'succeeded') {
 
                 // Hash the password before storing it in the database
-                $data = [
-                    'name' => $request->input('username'),
-                    'email' => $request->input('email'),
-                    'password' => bcrypt('admin1234'),
-                ];
-        
-                // Create a new user record
-                $seat_user = User::create($data);
+                // $data = [
+                //     'name' => $request->input('username'),
+                //     'email' => $request->input('email'),
+                //     'password' => bcrypt('admin1234'),
+                // ];
+
+                // // Create a new user record
+                // $seat_user = User::create($data);
 
                 // Retrieve user details
                 $user = auth()->user();
-                $user_name = $user->name;                
+                $user_name = $user->name;
                 $user_email = $user->email;
                 $user_id = $user->id;
                 $contact_no = '000111444666';
@@ -130,8 +131,8 @@ class StripePaymentController extends Controller
                     'user_id' => $user_id,
                     'swap_request_id' => '0'
                 ]);
-                
-                $seat_user_id = $seat_user->id;
+
+                $seat_user_id = $user->id;
                 $seat_username = $request->username;
                 $city = $request->city;
                 $state = $request->state;
@@ -142,7 +143,7 @@ class StripePaymentController extends Controller
                 $linkedin = $request->linkedin;
                 $twitter = $request->twitter;
                 $github = $request->github;
-            
+
                 // Insert transaction data into the database using Eloquent
                 $seat_user_data = SeatInfo::create([
                     'user_id' => $seat_user_id,
@@ -156,7 +157,7 @@ class StripePaymentController extends Controller
                     'linkedin' => $linkedin,
                     'twitter' => $twitter,
                     'github' => $github,
-                    'status' => '0',                    
+                    'status' => '0',
                 ]);
 
                 // Flash success message
@@ -170,6 +171,6 @@ class StripePaymentController extends Controller
             Session::flash('error', 'An error occurred while processing the payment.');
         }
 
-    return back();
+        return back();
     }
 }
